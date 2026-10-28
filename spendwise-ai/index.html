@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SpendWise AI — Aplikasi pengelolaan keuangan pribadi dengan AI Financial Assistant">
+  <title>SpendWise AI — Pengelola Keuangan Pribadi</title>
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 600: '#1e3a5f', 700: '#162d4a', 500: '#2a4f7c' },
+            teal: { 500: '#06b6d4', 400: '#22d3ee' },
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Global styles -->
+  <style>
+    /* Base */
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; background: #f8fafc; color: #1f2328; }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.5rem 1rem; border-radius: 0.75rem;
+      background: #1e3a5f; color: white; font-size: 0.875rem; font-weight: 500;
+      border: none; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #162d4a; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.5rem 1rem; border-radius: 0.75rem;
+      background: #f8fafc; color: #374151; font-size: 0.875rem; font-weight: 500;
+      border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: #f1f5f9; border-color: #d1d5db; }
+
+    /* Page transition */
+    .page { animation: fadeIn 0.18s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* AI response formatting — bold via ** ** */
+    .ai-response strong, .ai-response b { font-weight: 600; color: #1e3a5f; }
+
+    /* Bounce animation for typing indicator */
+    @keyframes bounce-dot {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+    .animate-bounce { animation: bounce-dot 1.2s ease-in-out infinite; }
+
+    /* Chart tooltips */
+    .chartjs-tooltip { font-family: -apple-system, "Segoe UI", system-ui, sans-serif !important; }
+
+    /* Prevent flash of unstyled content */
+    #app { min-height: 100vh; }
+
+    /* Modal overlay click-outside */
+    [data-modal] { cursor: default; }
+  </style>
+</head>
+<body class="bg-gray-50 antialiased">
+
+  <!-- Application root -->
+  <div id="app">
+    <!-- Loading state -->
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-[#1e3a5f] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+          </svg>
+        </div>
+        <p class="text-gray-400 text-sm">Memuat SpendWise AI...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Core Layer ===== -->
+  <script src="js/core/storage.js"></script>
+  <script src="js/core/finance.js"></script>
+  <script src="js/core/ui-utils.js"></script>
+  <script src="js/core/demo-data.js"></script>
+  <script src="js/core/state.js"></script>
+
+  <!-- ===== Modules ===== -->
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/transactions.js"></script>
+  <script src="js/modules/accounts.js"></script>
+  <script src="js/modules/budgets.js"></script>
+  <script src="js/modules/analytics.js"></script>
+  <script src="js/modules/ai-assistant.js"></script>
+  <script src="js/modules/goals.js"></script>
+  <script src="js/modules/settings.js"></script>
+
+  <!-- ===== App Bootstrap ===== -->
+  <script src="js/app.js"></script>
+
+  <!-- AI response bold text parser -->
+  <script>
+    // Convert **text** to <strong>text</strong> in AI responses
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(m => {
+        m.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            node.querySelectorAll('.ai-response').forEach(el => {
+              if (!el.dataset.parsed) {
+                el.innerHTML = el.innerHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                el.dataset.parsed = '1';
+              }
+            });
+          }
+        });
+      });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.getElementById('app'), { childList: true, subtree: true });
+    });
+  </script>
+
+  <!-- Modal close on overlay click -->
+  <script>
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('[data-modal]')) {
+        e.target.classList.add('hidden');
+        e.target.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+    });
+  </script>
+
+</body>
+</html>
